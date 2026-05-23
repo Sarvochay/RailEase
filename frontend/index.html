@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>RailEase</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="logo">Rail<span>Ease</span></div>
+  <button class="nav-link" onclick="go('home')">🏠 Home</button>
+  <span id="nav-tickets" style="display:none"><button class="nav-link" onclick="go('tickets')">🎫 My Tickets</button></span>
+  <span id="nav-profile" style="display:none"><button class="nav-link" onclick="go('profile')">👤 Profile</button></span>
+  <span id="nav-admin"   style="display:none"><button class="nav-link" onclick="go('admin')">⚙️ Admin</button></span>
+  <button class="nav-link" onclick="go('rac-info')" style="color:#c4b5fd">🟣 RAC Guide</button>
+  <span id="user-info" style="display:none">
+    <div class="avatar" id="nav-avatar">U</div>
+    <span id="nav-name"></span>
+    <button id="btn-logout" onclick="logout()">Logout</button>
+  </span>
+  <span id="nav-auth">
+    <button class="nav-link" onclick="go('login')">Login</button>
+    <button class="btn sm" onclick="go('register')" style="margin-left:4px">Sign Up</button>
+  </span>
+</nav>
+
+<!-- ══ HOME ══ -->
+<div class="page show" id="page-home">
+  <div class="hero">
+    <h1>Book Your <span>Train Journey</span></h1>
+    <p>120+ trains across India — with smart RAC & instant confirmation</p>
+    <div class="search-box">
+      <div class="sf" id="sf-from">
+        <label>From</label>
+        <input id="s-from" placeholder="e.g. Delhi" autocomplete="off"
+               oninput="cityAC(this,'dd-from')" onkeydown="cityKey(event,'dd-from','s-from')" onfocus="cityAC(this,'dd-from')"/>
+        <div class="city-dropdown" id="dd-from"></div>
+      </div>
+      <div class="sf" id="sf-to">
+        <label>To</label>
+        <input id="s-to" placeholder="e.g. Mumbai" autocomplete="off"
+               oninput="cityAC(this,'dd-to')" onkeydown="cityKey(event,'dd-to','s-to')" onfocus="cityAC(this,'dd-to')"/>
+        <div class="city-dropdown" id="dd-to"></div>
+      </div>
+      <div class="sf">
+        <label>Date</label>
+        <input type="date" id="s-date"/>
+      </div>
+      <button class="btn" onclick="searchTrains()">Search 🔍</button>
+    </div>
+  </div>
+
+  <!-- RAC GROUP RECOMMENDATIONS -->
+  <div class="rac-group-section" id="rac-group-section">
+    <h3>🛏️ Active RAC Group Bookings <span style="font-size:12px;font-weight:500;color:#7c3aed;background:#f3e8ff;padding:3px 10px;border-radius:20px;margin-left:4px">LIVE</span></h3>
+    <div class="rac-group-cards" id="rac-group-cards"></div>
+  </div>
+
+  <!-- Banner -->
+  <div class="rac-system-banner">
+    <div class="rac-banner-icon">🛏️</div>
+    <div class="rac-banner-content">
+      <h3>Smart RAC — Reservation Against Cancellation</h3>
+      <p>When confirmed seats are full, RailEase places you in a shared RAC berth. Passengers of the <strong style="color:#e9d5ff">same gender</strong> are automatically paired. Your ticket auto-upgrades to confirmed if any passenger cancels.</p>
+      <div class="rac-pills">
+        <span class="rac-pill">👨 Male ↔ Male pairing</span>
+        <span class="rac-pill">👩 Female ↔ Female pairing</span>
+        <span class="rac-pill">🔑 Same account shares own berth</span>
+        <span class="rac-pill">⬆️ Auto-upgrade on cancellation</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h2 class="section-title" id="res-title" style="margin-bottom:0">Available Trains</h2>
+      <p  class="section-sub"  id="res-sub"></p>
+    </div>
+    <select id="sort-filter" onchange="applySort()" style="padding:10px 16px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;font-size:13px;font-weight:700;color:#475569;box-shadow:0 2px 4px rgba(0,0,0,0.02);outline:none;cursor:pointer">
+      <option value="default">Sort: Default</option>
+      <option value="price_asc">💰 Price: Low to High</option>
+      <option value="price_desc">💎 Price: High to Low</option>
+      <option value="fastest">⚡ Fastest Route</option>
+    </select>
+  </div>
+  <div id="trains-list"></div>
+</div>
+
+<!-- ══ MY TICKETS ══ -->
+<div class="page" id="page-tickets">
+  <h2 class="section-title">My Tickets</h2>
+  <p class="section-sub">Your booking history</p>
+  <div class="ticket-filter-bar">
+    <span style="font-size:11px;font-weight:700;color:#94a3b8;margin-right:4px">FILTER:</span>
+    <button class="filter-btn f-all active" onclick="filterTickets('all',this)">All</button>
+    <button class="filter-btn f-confirmed" onclick="filterTickets('confirmed',this)">✅ Confirmed</button>
+    <button class="filter-btn" onclick="filterTickets('rac',this)">🟣 RAC</button>
+    <button class="filter-btn f-waiting" onclick="filterTickets('waiting',this)">🟡 Waiting</button>
+    <button class="filter-btn" onclick="filterTickets('cancelled',this)">❌ Cancelled</button>
+  </div>
+  <div id="my-tickets"></div>
+</div>
+
+<!-- ══ RAC INFO PAGE ══ -->
+<div class="page" id="page-rac-info">
+  <h2 class="section-title">🟣 RAC — How It Works</h2>
+  <p class="section-sub">Reservation Against Cancellation explained simply</p>
+  <div class="rac-system-banner" style="margin-bottom:24px">
+    <div class="rac-banner-icon">🛏️</div>
+    <div class="rac-banner-content">
+      <h3>What is RAC?</h3>
+      <p>RAC (Reservation Against Cancellation) is an Indian Railways system where two passengers share one side-lower berth. You get a guaranteed seat to travel, and your ticket upgrades to a full berth when a confirmed passenger cancels.</p>
+    </div>
+  </div>
+  <div class="card" style="padding:22px 26px;margin-bottom:18px">
+    <h4 style="font-size:14px;font-weight:800;margin-bottom:16px">👥 Pairing Rules (RailEase)</h4>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:28px;margin-bottom:8px">🔑</div>
+        <div style="font-weight:800;font-size:13px;color:#1e40af;margin-bottom:4px">Same Account / PNR</div>
+        <div style="font-size:12px;color:#374151;line-height:1.6">Same user books multiple RAC tickets → shares their own berth (gender not applied)</div>
+      </div>
+      <div style="background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:12px;padding:16px;text-align:center">
+        <div style="font-size:28px;margin-bottom:8px">👨👩</div>
+        <div style="font-weight:800;font-size:13px;color:#6d28d9;margin-bottom:4px">Different Passengers</div>
+        <div style="font-size:12px;color:#374151;line-height:1.6">Different users paired strictly by gender: males with males, females with females</div>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:24px">
+    <button class="btn" onclick="go('home')">← Search Trains</button>
+  </div>
+</div>
+
+<!-- ══ LOGIN ══ -->
+<div class="page" id="page-login">
+  <div style="max-width:400px;margin:0 auto">
+    <div class="card" style="padding:32px">
+      <h2 style="font-size:24px;font-weight:800;margin-bottom:4px;letter-spacing:-.5px">Welcome back</h2>
+      <p style="color:#64748b;font-size:13px;margin-bottom:24px">Sign in to your account</p>
+      <div class="fg"><label>Email</label><input id="l-email" type="email" placeholder="you@email.com"/></div>
+      <div class="fg"><label>Password</label><input id="l-pass" type="password" placeholder="••••••••"/></div>
+      <button class="btn btn-full" onclick="doLogin()">Sign In</button>
+
+      <p class="hint">No account? <a onclick="go('register')">Register →</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ REGISTER ══ -->
+<div class="page" id="page-register">
+  <div style="max-width:440px;margin:0 auto">
+    <div class="card" style="padding:32px">
+      <h2 style="font-size:24px;font-weight:800;margin-bottom:4px;letter-spacing:-.5px">Create account</h2>
+      <p style="color:#64748b;font-size:13px;margin-bottom:20px">Join RailEase today</p>
+      <div class="fg"><label>Full Name</label><input id="r-name" placeholder="Arjun Sharma"/></div>
+      <div class="fg"><label>Email</label><input id="r-email" type="email" placeholder="you@email.com"/></div>
+      <div class="fg"><label>Password</label><input id="r-pass" type="password" placeholder="••••••••"/></div>
+      <div class="fg-row">
+        <div class="fg"><label>Age</label><input id="r-age" type="number" placeholder="25" min="1" max="120"/></div>
+        <div class="fg"><label>Gender</label>
+          <select id="r-gender"><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
+        </div>
+      </div>
+      <div class="fg"><label>Phone (optional)</label><input id="r-phone" placeholder="9876543210"/></div>
+      <button class="btn btn-full" onclick="doRegister()">Create Account</button>
+      <p class="hint">Already registered? <a onclick="go('login')">Sign in →</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN ══ -->
+<div class="page" id="page-admin">
+  <h2 class="section-title">Admin Dashboard</h2>
+  <p class="section-sub">System overview</p>
+  <div class="stats" id="admin-stats"></div>
+  <div class="tabs">
+    <div class="tab active" onclick="adminTab('bookings',this)">All Bookings</div>
+    <div class="tab" onclick="adminTab('trains',this)">Trains</div>
+    <div class="tab" onclick="adminTab('add',this)">+ Add Train</div>
+  </div>
+  <div id="admin-content"></div>
+</div>
+
+<!-- ══ PROFILE ══ -->
+<div class="page" id="page-profile">
+  <div style="max-width:500px;margin:0 auto">
+    <div class="card" style="padding:32px">
+      <h2 style="font-size:24px;font-weight:800;margin-bottom:24px;letter-spacing:-.5px">My Profile</h2>
+      <div id="profile-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BOOKING MODAL ══ -->
+<div class="overlay" id="ov-book">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOv('ov-book')">✕</button>
+    <h3>Book Ticket</h3>
+    <p class="sub" id="bk-subtitle"></p>
+    <div id="bk-rac-notice"></div>
+    <div class="fg">
+      <label>Select Journey Date</label>
+      <div class="date-scroller" id="bk-date-scroller">
+        <!-- Date cards will be injected here -->
+      </div>
+    </div>
+    <div class="summary" id="bk-summary"></div>
+    <button class="btn btn-full" id="bk-btn" onclick="confirmBook()">Confirm & Pay ₹</button>
+  </div>
+</div>
+
+<!-- ══ PAYMENT MODAL (IMPROVED) ══ -->
+<div class="overlay" id="ov-pay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOv('ov-pay')">✕</button>
+    <h3>Complete Payment</h3>
+    <p class="sub">PNR: <span id="pay-pnr" style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#0f172a"></span></p>
+    <div class="summary" id="pay-summary"></div>
+
+    <!-- Method Tabs -->
+    <div class="pay-methods">
+      <div class="pay-tab active" id="ptab-card" onclick="switchPayTab('card')">
+        <span class="pay-icon">💳</span>Card
+      </div>
+      <div class="pay-tab" id="ptab-upi" onclick="switchPayTab('upi')">
+        <span class="pay-icon">📱</span>UPI
+      </div>
+      <div class="pay-tab" id="ptab-bank" onclick="switchPayTab('bank')">
+        <span class="pay-icon">🏦</span>Net Banking
+      </div>
+    </div>
+
+    <!-- ── CARD FORM ── -->
+    <div class="card-form show" id="pf-card">
+      <div class="card-preview" id="card-preview">
+        <div class="card-chip"></div>
+        <div class="card-number-preview" id="prev-number">•••• •••• •••• ••••</div>
+        <div class="card-meta">
+          <div>
+            <div class="card-label">Card Holder</div>
+            <div class="card-value" id="prev-name">YOUR NAME</div>
+          </div>
+          <div>
+            <div class="card-label">Expires</div>
+            <div class="card-value" id="prev-expiry">MM/YY</div>
+          </div>
+        </div>
+        <div class="card-network">
+          <span class="dot dot1"></span><span class="dot dot2"></span>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Card Number</label>
+        <input id="c-number" placeholder="1234 5678 9012 3456" maxlength="19" oninput="fmtCard(this)" style="font-family:'JetBrains Mono',monospace;letter-spacing:2px;font-size:15px"/>
+      </div>
+      <div class="fg">
+        <label>Cardholder Name</label>
+        <input id="c-name" placeholder="ARJUN SHARMA" oninput="this.value=this.value.toUpperCase();document.getElementById('prev-name').textContent=this.value||'YOUR NAME'" style="text-transform:uppercase;font-weight:600"/>
+      </div>
+      <div class="fg-row">
+        <div class="fg">
+          <label>Expiry Date</label>
+          <input id="c-expiry" placeholder="MM/YY" maxlength="5" oninput="fmtExpiry(this)" style="font-family:'JetBrains Mono',monospace;letter-spacing:1px"/>
+        </div>
+        <div class="fg">
+          <label>CVV</label>
+          <input id="c-cvv" placeholder="•••" maxlength="4" type="password" style="font-family:'JetBrains Mono',monospace;letter-spacing:4px"/>
+        </div>
+      </div>
+      <button class="btn btn-full green" onclick="doPay('card')">Pay Now 🔒</button>
+    </div>
+
+    <!-- ── UPI FORM ── -->
+    <div class="upi-form" id="pf-upi">
+      <div class="qr-container">
+        <div class="qr-box">
+          <canvas id="qr-canvas" width="180" height="180"></canvas>
+          <div class="qr-label">Scan with any UPI app</div>
+          <div class="qr-amount" id="qr-amount">₹0</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:12px;color:#64748b;font-weight:600;margin-bottom:12px">— or choose your UPI app —</div>
+      <div class="upi-apps">
+        <div class="upi-app" onclick="selectUpiApp('GPay')"><div class="app-icon">🟢</div>GPay</div>
+        <div class="upi-app" onclick="selectUpiApp('PhonePe')"><div class="app-icon">🟣</div>PhonePe</div>
+        <div class="upi-app" onclick="selectUpiApp('Paytm')"><div class="app-icon">🔵</div>Paytm</div>
+        <div class="upi-app" onclick="selectUpiApp('BHIM')"><div class="app-icon">🇮🇳</div>BHIM</div>
+      </div>
+      <div class="fg" style="margin-top:8px">
+        <label>Or enter UPI ID</label>
+        <input class="upi-id-input" id="upi-id" placeholder="yourname@upi" />
+      </div>
+      <button class="btn btn-full purple" style="margin-top:4px" onclick="doPay('upi')">Verify & Pay</button>
+    </div>
+
+    <!-- ── NET BANKING FORM ── -->
+    <div class="bank-form" id="pf-bank">
+      <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Select Your Bank</div>
+      <div class="bank-grid">
+        <div class="bank-opt" onclick="selBank(this)"><div class="bank-icon">🏦</div>SBI</div>
+        <div class="bank-opt" onclick="selBank(this)"><div class="bank-icon">🏛️</div>HDFC</div>
+        <div class="bank-opt" onclick="selBank(this)"><div class="bank-icon">🔵</div>ICICI</div>
+        <div class="bank-opt" onclick="selBank(this)"><div class="bank-icon">🟠</div>Axis</div>
+        <div class="bank-opt" onclick="selBank(this)"><div class="bank-icon">🟢</div>Kotak</div>
+        <div class="bank-opt" onclick="selBank(this)"><div class="bank-icon">🟡</div>PNB</div>
+      </div>
+      <div class="fg" style="margin-top:8px">
+        <label>Net Banking User ID</label>
+        <input id="nb-uid" placeholder="Enter your bank user ID"/>
+      </div>
+      <div class="fg">
+        <label>Password</label>
+        <input id="nb-pass" type="password" placeholder="••••••••"/>
+      </div>
+      <button class="btn btn-full sky" onclick="doPay('bank')">Login & Pay</button>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
